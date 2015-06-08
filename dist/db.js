@@ -1,5 +1,5 @@
 var mongodb = require('mongodb');
-var autoIncrement = require("mongodb-autoincrement");
+var autoIncrement = require('mongodb-autoincrement');
 var plane = require('./plane');
 var server = new mongodb.Server('localhost', 27017, { auto_reconnect: true });
 var db = new mongodb.Db('avionmake', server, { w: 1 });

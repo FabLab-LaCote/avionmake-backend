@@ -1,5 +1,5 @@
 import mongodb = require('mongodb');
-import autoIncrement = require("mongodb-autoincrement");
+import autoIncrement = require('mongodb-autoincrement');
 import plane = require('./plane');
 
 var server = new mongodb.Server('localhost', 27017, {auto_reconnect: true});
@@ -15,7 +15,7 @@ export function getNextSequence(callback:(err, autoIndex)=>void){
 
 export function savePlane(plane:IPlane, callback:(err, res)=>void){
     db.collection('plane')
-    .update({_id: plane._id}, plane, {upsert:true}, callback)
+    .update({_id: plane._id}, plane, {upsert:true}, callback);
 }
 
 
