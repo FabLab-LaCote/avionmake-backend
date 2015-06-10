@@ -94,7 +94,7 @@ function createPDF(stream, plane, options) {
     if (options.texturePage) {
         doc.font('Helvetica', 62)
             .stroke('black')
-            .text('AVION:MAKE #' + plane._id, 25, 25, {});
+            .text('AVION:MAKE:' + plane._id, 25, 25, {});
         doc.image(exports.fablab_logo, 1650, 0);
         var bleed = 0;
         if (!options.mergePdf) {

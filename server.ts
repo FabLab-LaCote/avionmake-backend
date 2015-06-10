@@ -39,10 +39,12 @@ else if (env === 'production') {
 //save/update
 app.post('/api/plane', function(req, res){
     function saveNewPlane(){
-        db.getNextSequence((err, autoIndex)=>{
-            req.body._id = autoIndex;
+        //TODO: get from env?
+        var serverPrefix = process.env.NODE_ENV || 'FL'        
+        db.getNextId(serverPrefix, (err, autoIndex)=>{
+            req.body._id = serverPrefix + '-' + autoIndex;
             db.savePlane(<IPlane>req.body, (err, result)=>{
-                res.end(String(autoIndex));
+                res.end(req.body._id);
             });    
         });
     }   
@@ -56,7 +58,7 @@ app.post('/api/plane', function(req, res){
                             res.end(String(req.body._id));
                         });
                     }else{
-                        res.end(String(p.id));
+                        res.end(p.id);
                     }
                 }else{
                     saveNewPlane();

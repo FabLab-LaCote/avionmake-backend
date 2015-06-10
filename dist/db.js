@@ -6,18 +6,18 @@ var db = new mongodb.Db('avionmake', server, { w: 1 });
 db.open(function () {
     return true;
 });
-function getNextSequence(callback) {
-    autoIncrement.getNextSequence(db, 'plane', null, callback);
+function getNextId(collection, callback) {
+    autoIncrement.getNextSequence(db, collection, null, callback);
 }
-exports.getNextSequence = getNextSequence;
+exports.getNextId = getNextId;
 function savePlane(plane, callback) {
     db.collection('plane')
         .update({ _id: plane._id }, plane, { upsert: true }, callback);
 }
 exports.savePlane = savePlane;
 function getPlane(id, fullPlane, callback) {
-    db.collection('plane').findOne({ _id: Number(id) }, { info: 0 }, function (err, p) {
-        if (fullPlane) {
+    db.collection('plane').findOne({ _id: id }, { info: 0 }, function (err, p) {
+        if (p && fullPlane) {
             p = plane.expandPlane(p);
         }
         callback(err, p);

@@ -9,8 +9,8 @@ db.open(function() {
 });
 
 //TODO fix https://github.com/TheRoSS/mongodb-autoincrement/issues/2
-export function getNextSequence(callback:(err, autoIndex)=>void){
-    autoIncrement.getNextSequence(db, 'plane', null,  callback);
+export function getNextId(collection:string, callback:(err, autoIndex)=>void){
+    autoIncrement.getNextSequence(db, collection, null,  callback);
 }
 
 export function savePlane(plane:IPlane, callback:(err, res)=>void){
@@ -19,10 +19,10 @@ export function savePlane(plane:IPlane, callback:(err, res)=>void){
 }
 
 
-export function getPlane(id, fullPlane:boolean, callback:(err, res)=>void){
+export function getPlane(id:string, fullPlane:boolean, callback:(err, res)=>void){
     //info are protected
-    db.collection('plane').findOne({_id: Number(id)}, {info:0}, (err, p) => {
-        if(fullPlane){
+    db.collection('plane').findOne({_id: id}, {info:0}, (err, p) => {
+        if(p && fullPlane){
             p = plane.expandPlane(p);
         }
         callback(err, p);   

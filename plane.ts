@@ -104,7 +104,7 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
         //first page print version
     	doc.font('Helvetica', 62)
     	.stroke('black')
-    	.text('AVION:MAKE #' + plane._id, 25, 25, {});    
+    	.text('AVION:MAKE:' + plane._id, 25, 25, {});    
     	doc.image(fablab_logo,1650,0);
     	      
       var bleed = 0;
