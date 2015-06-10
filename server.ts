@@ -5,6 +5,7 @@ import cors = require('cors');
 import express = require('express');
 import bodyParser = require('body-parser');
 import errorHandler = require('errorhandler');
+import raven = require('raven');
 
 import db = require('./db');
 import plane = require('./plane');
@@ -12,9 +13,13 @@ import plane = require('./plane');
 enum PrintState{NONE,PREVIEW,PRINT,CUT};
 
 var app = express();
+
+//TODO SENTRY_DSN as env_var
+app.use(raven.middleware.express.requestHandler('https://604cf8a1fa92494c935ca53fb59260c9:daf6d8f9d6b44a618f07174cb25704dc@j42.org/sentry/5'));
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({limit: '50mb'}));
+app.use(raven.middleware.express.errorHandler('https://604cf8a1fa92494c935ca53fb59260c9:daf6d8f9d6b44a618f07174cb25704dc@j42.org/sentry/5'));
 
 var env = process.env.NODE_ENV || 'development';
 if (env === 'development') {
@@ -23,10 +28,8 @@ if (env === 'development') {
     app.use('/scripts', express.static(__dirname + '/../../avionmake/.tmp/scripts'));
     app.use('/styles', express.static(__dirname + '/../../avionmake/.tmp/styles'));
     app.use('/bower_components', express.static(__dirname + '/../../avionmake/bower_components'));
-    
 }
 else if (env === 'production') {
-    app.use(errorHandler());
     app.use(express.static(__dirname + '/public'));
 }
 
