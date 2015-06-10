@@ -96,9 +96,14 @@ function createPDF(stream, plane, options) {
             .stroke('black')
             .text('AVION:MAKE #' + plane._id, 25, 25, {});
         doc.image(exports.fablab_logo, 1650, 0);
-        plane.parts.forEach(function (part) {
+        var bleed = 0;
+        if (!options.mergePdf) {
+            bleed = 10;
+        }
+        plane.parts.forEach(function (part, i) {
             if (part.hasOwnProperty('position2D') && part.hasOwnProperty('textureBitmap') && part.textureBitmap) {
-                doc.image(part.textureBitmap, part.position2D.x, part.position2D.y);
+                doc.image(part.textureBitmap, part.position2D.x - bleed, part.position2D.y - bleed, { width: part.width + 2 * bleed,
+                    height: part.height + 2 * bleed });
             }
         });
     }

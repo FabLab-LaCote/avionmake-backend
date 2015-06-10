@@ -6,7 +6,11 @@ import express = require('express');
 import bodyParser = require('body-parser');
 import errorHandler = require('errorhandler');
 import raven = require('raven');
-
+var client = new raven.Client('https://604cf8a1fa92494c935ca53fb59260c9:daf6d8f9d6b44a618f07174cb25704dc@j42.org/sentry/5');
+client.patchGlobal(function(sent, err) {
+  console.log(err.stack);
+  process.exit(1);
+});
 import db = require('./db');
 import plane = require('./plane');
 
@@ -15,11 +19,10 @@ enum PrintState{NONE,PREVIEW,PRINT,CUT};
 var app = express();
 
 //TODO SENTRY_DSN as env_var
-app.use(raven.middleware.express.requestHandler('https://604cf8a1fa92494c935ca53fb59260c9:daf6d8f9d6b44a618f07174cb25704dc@j42.org/sentry/5'));
+app.use(raven.middleware.express(client));
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({limit: '50mb'}));
-app.use(raven.middleware.express.errorHandler('https://604cf8a1fa92494c935ca53fb59260c9:daf6d8f9d6b44a618f07174cb25704dc@j42.org/sentry/5'));
 
 var env = process.env.NODE_ENV || 'development';
 if (env === 'development') {
@@ -35,26 +38,33 @@ else if (env === 'production') {
 
 //save/update
 app.post('/api/plane', function(req, res){
+    function saveNewPlane(){
+        db.getNextSequence((err, autoIndex)=>{
+            req.body._id = autoIndex;
+            db.savePlane(<IPlane>req.body, (err, result)=>{
+                res.end(String(autoIndex));
+            });    
+        });
+    }   
     try{
         if(req.body._id){
             //if id and found and note printed update
             db.getPlane(req.body._id, false, (err, p)=>{
-                if(p.printState < PrintState.PRINT){
-                    db.savePlane(<IPlane>req.body, (err, result)=>{
-                        res.end(String(req.body._id));
-                    });
+                if(p && p.hasOwnProperty('printState')){
+                    if(p.printState < PrintState.PRINT){
+                        db.savePlane(<IPlane>req.body, (err, result)=>{
+                            res.end(String(req.body._id));
+                        });
+                    }else{
+                        res.end(String(p.id));
+                    }
                 }else{
-                    res.end(String(p.id));
+                    saveNewPlane();
                 }
             });      
         }else{
             //if no_id -> save with newid
-            db.getNextSequence((err, autoIndex)=>{
-                req.body._id = autoIndex;
-                db.savePlane(<IPlane>req.body, (err, result)=>{
-                    res.end(String(autoIndex));
-                });    
-            });
+            saveNewPlane();
         }
     }catch(err){
          res.status(500);

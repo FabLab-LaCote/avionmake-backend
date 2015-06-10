@@ -23,6 +23,6 @@
     "mongodb-autoincrement": "^1.0.0",
     "mongoose": "^4.0.5",
     "pdfkit": "^0.7.1",
-    "raven": "getsentry/raven-node"
+    "raven": "^0.7.3"
   }
 }
