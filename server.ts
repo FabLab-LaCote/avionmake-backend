@@ -40,7 +40,7 @@ else if (env === 'production') {
 app.post('/api/plane', function(req, res){
     function saveNewPlane(){
         //TODO: get from env?
-        var serverPrefix = process.env.NODE_ENV || 'FL'        
+        var serverPrefix = process.env.NODE_ENV || 'FL';
         db.getNextId(serverPrefix, (err, autoIndex)=>{
             req.body._id = serverPrefix + '-' + autoIndex;
             db.savePlane(<IPlane>req.body, (err, result)=>{
