@@ -23,7 +23,14 @@ export function expandPlane(obj):IPlane{
             var localPart = getPartFromPlane(p, part.name);
             //update decals
             localPart.decals = part.decals;
+            localPart.decals.forEach((decal:Decal)=>{
+              if(decal.locked === 'tailnumber'){
+                decal.text = obj._id;
+              }
+            });
+            
             localPart.textureBitmap = part.textureBitmap;
+            
       });
       obj.parts = parts;
     }

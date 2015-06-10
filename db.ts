@@ -14,6 +14,7 @@ export function getNextId(collection:string, callback:(err, autoIndex)=>void){
 }
 
 export function savePlane(plane:IPlane, callback:(err, res)=>void){
+    plane.lastModified = new Date();
     db.collection('plane')
     .update({_id: plane._id}, plane, {upsert:true}, callback);
 }
@@ -27,4 +28,13 @@ export function getPlane(id:string, fullPlane:boolean, callback:(err, res)=>void
         }
         callback(err, p);   
     });
+}
+
+export function updateField(id:string, field:string, value:any, callback:(err, res)=>void){
+    var update = {};
+    update[field] = value;
+    db.collection('plane')
+    .update({_id: id}, {
+        $set:update,
+        $currentDate: { lastModified: true }}, callback);
 }

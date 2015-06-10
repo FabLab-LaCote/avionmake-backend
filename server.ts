@@ -1,12 +1,16 @@
 ///<reference path="typings/tsd.d.ts" />
 
+require('dotenv').load();
 import http = require('http');
 import cors = require('cors');
 import express = require('express');
 import bodyParser = require('body-parser');
 import errorHandler = require('errorhandler');
 import raven = require('raven');
-var client = new raven.Client('https://604cf8a1fa92494c935ca53fb59260c9:daf6d8f9d6b44a618f07174cb25704dc@j42.org/sentry/5');
+import fs = require('fs');
+import nodemailer = require('nodemailer');
+
+var client = new raven.Client( process.env.SENTRY_DSN || '');
 client.patchGlobal(function(sent, err) {
   console.log(err.stack);
   process.exit(1);
@@ -18,7 +22,6 @@ enum PrintState{NONE,PREVIEW,PRINT,CUT};
 
 var app = express();
 
-//TODO SENTRY_DSN as env_var
 app.use(raven.middleware.express(client));
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -36,13 +39,15 @@ else if (env === 'production') {
     app.use(express.static(__dirname + '/public'));
 }
 
+
+var SERVER_PREFIX:string = process.env.SERVER_PREFIX || 'FL';
+
 //save/update
 app.post('/api/plane', function(req, res){
     function saveNewPlane(){
-        //TODO: get from env?
-        var serverPrefix = process.env.NODE_ENV || 'FL';
-        db.getNextId(serverPrefix, (err, autoIndex)=>{
-            req.body._id = serverPrefix + '-' + autoIndex;
+        db.getNextId(SERVER_PREFIX, (err, autoIndex)=>{
+            req.body._id = SERVER_PREFIX + '-' + autoIndex;
+            
             db.savePlane(<IPlane>req.body, (err, result)=>{
                 res.end(req.body._id);
             });    
@@ -98,24 +103,79 @@ app.get('/api/pdf/:id', function(req, res){
 //print = create pdf files
 app.get('/api/print/:id', function(req, res){
     db.getPlane(req.params.id, true, (err, p)=>{  
-        //TODO FS
-        plane.createPDF(res, p, {
-            mergePdf:false,
-            texturePage: true,
-            cutPage:false
-        });
-        //TODO FS
-        plane.createPDF(res, p, {
-            mergePdf:false,
-            texturePage: false,
-            cutPage:true
-        });
+        if(p){
+            plane.createPDF(fs.createWriteStream('pdf/' + SERVER_PREFIX + '/' + p._id + '-print.pdf' ), p, {
+                mergePdf:true,
+                texturePage: true,
+                cutPage:false
+            });
+            plane.createPDF(fs.createWriteStream('pdf/' + SERVER_PREFIX + '/' + p._id + '-cut.pdf' ), p, {
+                mergePdf:false,
+                texturePage: false,
+                cutPage:true
+            });
+            plane.createPDF(fs.createWriteStream('pdf/' + SERVER_PREFIX + '/' + p._id + '-merged.pdf' ), p, {
+                mergePdf:true,
+                texturePage: true,
+                cutPage:true
+            });
+            //if net send-email
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(404);   
+        }
     });
 });
+
+var transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: true,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD
+    }
+});
+
+//sendmail
+app.get('/api/testmail', function(req, res){
+    var p = {
+        _id: 'FL-2',
+        email: 'bfritscher@fablab-lacote.ch'
+    };
+    
+    transporter.sendMail({
+        from: 'info@fablab-lacote.ch',
+        to: p.email,
+        subject: 'hello',
+        text: 'hello world!',
+        //include files guide and info?
+        attachments:[
+            {path:'pdf/' + SERVER_PREFIX + '/' + p._id + '-print.pdf'},
+            {path:'pdf/' + SERVER_PREFIX + '/' + p._id + '-cut.pdf'},
+            {path:'pdf/' + SERVER_PREFIX + '/' + p._id + '-merged.pdf'}
+        ]
+    },(err, info)=>{
+        //update state emailed...
+        var emailSent:any = err;
+        if(!err && info && info.accepted){
+            if(info.accepted.indexOf(p.email)>-1){
+                emailSent = new Date();
+            }else{
+                emailSent = 'not accepted';
+            }
+        }
+        db.updateField(p._id, 'info.emailSent', emailSent, null);
+        
+    });
+    res.sendStatus(200);
+});
+
+
+//update state printed...
 //get collection paged? filtered sorted
     //get ranking
 //disable a plane from collection
-//update state printed...
 //update score
 
 app.listen(8080, function(){

@@ -16,6 +16,18 @@
     },
     "express/express.d.ts": {
       "commit": "8c7444882a2bc2ab87387f8f736a7d97e89b9c90"
+    },
+    "nodemailer/nodemailer.d.ts": {
+      "commit": "52dc8fc39354569838b7bc09e24df690b852b4d9"
+    },
+    "nodemailer-smtp-transport/nodemailer-smtp-transport.d.ts": {
+      "commit": "52dc8fc39354569838b7bc09e24df690b852b4d9"
+    },
+    "nodemailer/nodemailer-types.d.ts": {
+      "commit": "52dc8fc39354569838b7bc09e24df690b852b4d9"
+    },
+    "nodemailer-direct-transport/nodemailer-direct-transport.d.ts": {
+      "commit": "52dc8fc39354569838b7bc09e24df690b852b4d9"
     }
   }
 }

@@ -20,6 +20,11 @@ function expandPlane(obj) {
         obj.parts.forEach(function (part) {
             var localPart = getPartFromPlane(p, part.name);
             localPart.decals = part.decals;
+            localPart.decals.forEach(function (decal) {
+                if (decal.locked === 'tailnumber') {
+                    decal.text = obj._id;
+                }
+            });
             localPart.textureBitmap = part.textureBitmap;
         });
         obj.parts = parts;

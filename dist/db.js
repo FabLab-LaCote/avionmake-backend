@@ -11,6 +11,7 @@ function getNextId(collection, callback) {
 }
 exports.getNextId = getNextId;
 function savePlane(plane, callback) {
+    plane.lastModified = new Date();
     db.collection('plane')
         .update({ _id: plane._id }, plane, { upsert: true }, callback);
 }
@@ -24,4 +25,13 @@ function getPlane(id, fullPlane, callback) {
     });
 }
 exports.getPlane = getPlane;
+function updateField(id, field, value, callback) {
+    var update = {};
+    update[field] = value;
+    db.collection('plane')
+        .update({ _id: id }, {
+        $set: update,
+        $currentDate: { lastModified: true } }, callback);
+}
+exports.updateField = updateField;
 //# sourceMappingURL=db.js.map
