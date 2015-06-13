@@ -20,8 +20,6 @@ client.patchGlobal(function(sent, err) {
 import db = require('./db');
 import plane = require('./plane');
 
-enum PrintState{NONE,PREVIEW,PRINT,CUT,ASSEMBLE,FLY};
-
 var app = express();
 
 app.use(raven.middleware.express(client));

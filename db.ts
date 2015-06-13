@@ -10,12 +10,14 @@ db.open(function() {
 	return true;
 });
 
+
 //TODO fix https://github.com/TheRoSS/mongodb-autoincrement/issues/2
 export function getNextId(collection:string, callback:(err, autoIndex)=>void){
     autoIncrement.getNextSequence(db, collection, null,  callback);
 }
 
 export function savePlane(plane:IPlane, callback:(err, res)=>void){
+    plane.printState = PrintState.PREVIEW;
     plane.lastModified = new Date();
     db.collection('plane')
     .update({_id: plane._id}, plane, {upsert:true}, callback);
@@ -80,7 +82,7 @@ export function nextPlanes(id, limit, callback:(err, res)=>void){
 export function getScores(callback:(err, res)=>void){
     db.collection('plane').find({
                 score: {$exists:true},
-                printState: 5
+                printState: PrintState.FLY
             }, {
                 info:0,
                 parts:0

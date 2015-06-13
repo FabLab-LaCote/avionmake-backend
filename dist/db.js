@@ -12,6 +12,7 @@ function getNextId(collection, callback) {
 }
 exports.getNextId = getNextId;
 function savePlane(plane, callback) {
+    plane.printState = PrintState.PREVIEW;
     plane.lastModified = new Date();
     db.collection('plane')
         .update({ _id: plane._id }, plane, { upsert: true }, callback);
@@ -74,7 +75,7 @@ exports.nextPlanes = nextPlanes;
 function getScores(callback) {
     db.collection('plane').find({
         score: { $exists: true },
-        printState: 5
+        printState: PrintState.FLY
     }, {
         info: 0,
         parts: 0
