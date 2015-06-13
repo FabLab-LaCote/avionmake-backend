@@ -11,6 +11,7 @@ import fs = require('fs');
 import nodemailer = require('nodemailer');
 import isOnline = require('is-online');
 import childProcess = require('child_process');
+import PrintState = require('./printstate');
 
 var client = new raven.Client( process.env.SENTRY_DSN || '');
 client.patchGlobal(function(sent, err) {
@@ -86,6 +87,12 @@ app.get('/api/scores', function(req, res){
     });
 });
 
+app.get('/api/stats', function(req, res){
+    //get from db
+    db.getStats((err, planes)=>{
+        res.json(planes);
+    });
+});
 
 app.get('/api/plane/:id', function(req, res){
     //get from db

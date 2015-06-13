@@ -3,13 +3,13 @@
 import mongodb = require('mongodb');
 import autoIncrement = require('mongodb-autoincrement');
 import plane = require('./plane');
+import PrintState = require('./printstate');
 
 var server = new mongodb.Server('localhost', 27017, {auto_reconnect: true});
 var db = new mongodb.Db('avionmake', server, { w: 1 });
 db.open(function() {
 	return true;
 });
-
 
 //TODO fix https://github.com/TheRoSS/mongodb-autoincrement/issues/2
 export function getNextId(collection:string, callback:(err, autoIndex)=>void){
@@ -81,12 +81,22 @@ export function nextPlanes(id, limit, callback:(err, res)=>void){
 
 export function getScores(callback:(err, res)=>void){
     db.collection('plane').find({
-                score: {$exists:true},
-                printState: PrintState.FLY
+            score: {$exists:true},
+            printState: PrintState.FLY
+        }, {
+            info:0,
+            parts:0
+        }, {
+            sort: {score: -1}
+        }).toArray(callback);
+}
+
+export function getStats(callback:(err, res)=>void){
+    db.collection('plane').find({
             }, {
-                info:0,
-                parts:0
-            }, {
-                sort: {score: -1},
-            }).toArray(callback);
+            info:0,
+            parts:0
+        }, {
+            sort: {lastModified: 1,  _id: 1}
+        }).toArray(callback);
 }

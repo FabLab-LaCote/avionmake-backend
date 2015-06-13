@@ -12,7 +12,7 @@ function getNextId(collection, callback) {
 }
 exports.getNextId = getNextId;
 function savePlane(plane, callback) {
-    plane.printState = PrintState.PREVIEW;
+    plane.printState = 1;
     plane.lastModified = new Date();
     db.collection('plane')
         .update({ _id: plane._id }, plane, { upsert: true }, callback);
@@ -75,13 +75,22 @@ exports.nextPlanes = nextPlanes;
 function getScores(callback) {
     db.collection('plane').find({
         score: { $exists: true },
-        printState: PrintState.FLY
+        printState: 5
     }, {
         info: 0,
         parts: 0
     }, {
-        sort: { score: -1 },
+        sort: { score: -1 }
     }).toArray(callback);
 }
 exports.getScores = getScores;
+function getStats(callback) {
+    db.collection('plane').find({}, {
+        info: 0,
+        parts: 0
+    }, {
+        sort: { lastModified: 1, _id: 1 }
+    }).toArray(callback);
+}
+exports.getStats = getStats;
 //# sourceMappingURL=db.js.map
