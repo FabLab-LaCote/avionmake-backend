@@ -41,6 +41,7 @@ export function updateField(id:string, field:string, value:any, callback:(err, r
 
 export function firstPlanes(limit, callback:(err, res)=>void){
     db.collection('plane').find({
+            lastModified: {$exists:true}
         },
         {
             info:0
@@ -50,20 +51,26 @@ export function firstPlanes(limit, callback:(err, res)=>void){
         }).toArray(callback);
 }
 
-
 export function nextPlanes(id, limit, callback:(err, res)=>void){
-    db.collection('plane').find({
-         _id: {$gt: id}
-        }, {
-            info:0
-        }, {
-            sort: {lastModified: 1,  _id: 1},
-            limit: limit
-        }).toArray((err, data) => {
-            if( data.length > 0){
-                callback(err, data);
-            }else{
-                firstPlanes(limit, callback);
-            } 
-        });
+    getPlane(id, false, (err, p)=>{
+       if(p && p.lastModified){
+           db.collection('plane').find({
+             lastModified: {$gt: p.lastModified}
+            }, {
+                info:0
+            }, {
+                sort: {lastModified: 1,  _id: 1},
+                limit: limit
+            }).toArray((err, data) => {
+                if( data.length > 0){
+                    callback(err, data);
+                }else{         
+                    firstPlanes(limit, callback);
+                } 
+            });    
+       }else{
+            firstPlanes(limit, callback);
+       }
+        
+    });
 }
