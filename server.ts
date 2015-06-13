@@ -9,6 +9,8 @@ import errorHandler = require('errorhandler');
 import raven = require('raven');
 import fs = require('fs');
 import nodemailer = require('nodemailer');
+import isOnline = require('is-online');
+import childProcess = require('child_process');
 
 var client = new raven.Client( process.env.SENTRY_DSN || '');
 client.patchGlobal(function(sent, err) {
@@ -18,7 +20,7 @@ client.patchGlobal(function(sent, err) {
 import db = require('./db');
 import plane = require('./plane');
 
-enum PrintState{NONE,PREVIEW,PRINT,CUT};
+enum PrintState{NONE,PREVIEW,PRINT,CUT,ASSEMBLE,FLY};
 
 var app = express();
 
@@ -137,15 +139,17 @@ app.post('/api/print/:id', function(req, res){
                })
             ])
             .then(()=>{
-                //TODO: send to printer?
-                /*
-                if(print)
-                exec print 
-                PrintDate?
-                res.end('print');
-                res.end('print@home');
-                */
-                res.end('print@home');
+                if(process.env.PRINTER && process.env.FOXIT_LOCATION){
+                    childProcess.spawn(process.env.FOXIT_LOCATION,
+                        ['/t', __dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-print.pdf', process.env.PRINTER],
+                        {
+                            stdio: 'ignore'
+                        });
+                    res.end('print');    
+                }else{
+                    res.end('print@home');    
+                }
+
                 db.updateField(p._id, 'printState', PrintState.PRINT, null);
                 db.updateField(p._id, 'name', p.name, null);
                 db.updateField(p._id, 'info', req.body, null);
@@ -153,7 +157,11 @@ app.post('/api/print/:id', function(req, res){
                 
                 //if net send-email
                 if(req.body.email){
-                    sendmail(p);
+                    isOnline((err, isOnline)=>{
+                      if(isOnline){
+                          sendmail(p);
+                      }
+                    });
                 }                
             });
           
