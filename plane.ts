@@ -37,7 +37,7 @@ export function expandPlane(obj):IPlane{
     return obj;
 }
 
-export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IPdfOptions){
+export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IPdfOptions):Promise<any>{
 	//CUSTOM FIX textures TODO move
   /* scale mirroring broken :-( 
 	if(plane.type === 'plane1'){
@@ -94,6 +94,7 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
         ctx.drawImage(img, 0, wy, p.width, p.height-wy, 0, 110, -p.width, p.height-wy);
         r.textureBitmap = canvas.toDataURL();
 	} //fix plane1
+  
   */
   
 	//create PDF
@@ -111,7 +112,7 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
         //first page print version
     	doc.font('Helvetica', 62)
     	.stroke('black')
-    	.text('AVION:MAKE:' + plane._id, 25, 25, {});    
+    	.text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 25, 25, {});    
     	doc.image(fablab_logo,1650,0);
     	      
       var bleed = 0;
@@ -179,6 +180,11 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
         });
     }
     doc.end();
+    return new Promise((resolve, reject)=>{
+      stream.on('finish', ()=>{
+        resolve();
+      });
+    });
 }
 
 function getPartFromPlane(plane:IPlane, name:string):Part{

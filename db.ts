@@ -38,3 +38,32 @@ export function updateField(id:string, field:string, value:any, callback:(err, r
         $set:update,
         $currentDate: { lastModified: true }}, callback);
 }
+
+export function firstPlanes(limit, callback:(err, res)=>void){
+    db.collection('plane').find({
+        },
+        {
+            info:0
+        }, {
+            sort: { lastModified : 1 },
+            limit: limit
+        }).toArray(callback);
+}
+
+
+export function nextPlanes(id, limit, callback:(err, res)=>void){
+    db.collection('plane').find({
+         _id: {$gt: id}
+        }, {
+            info:0
+        }, {
+            sort: {lastModified: 1,  _id: 1},
+            limit: limit
+        }).toArray((err, data) => {
+            if( data.length > 0){
+                callback(err, data);
+            }else{
+                firstPlanes(limit, callback);
+            } 
+        });
+}

@@ -63,7 +63,7 @@ app.post('/api/plane', function(req, res){
                             res.end(String(req.body._id));
                         });
                     }else{
-                        res.end(p.id);
+                        res.end(p._id);
                     }
                 }else{
                     saveNewPlane();
@@ -106,40 +106,57 @@ app.get('/api/finalpdf/:id', function(req, res){
     res.sendFile(__dirname + '/pdf/' + prefix + '/' + req.params.id + '-' + req.query.type + '.pdf');
 });
 
+app.get('/api/nextplanes/:id?/:limit?', function(req, res){
+    db.nextPlanes(req.params.id, req.params.limit || 1, (err, p)=>{
+      res.json(p);
+    });
+});
+
 //print = create pdf files
 app.post('/api/print/:id', function(req, res){
    
-    db.getPlane(req.params.id, true, (err, p)=>{  
+    db.getPlane(req.params.id, true, (err, p:IPlane)=>{  
         if(p){
-            plane.createPDF(fs.createWriteStream(__dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-print.pdf' ), p, {
-                mergePdf:true,
-                texturePage: true,
-                cutPage:false
+            p.name = req.body.name;
+            delete req.body.name;
+            Promise.all([
+               plane.createPDF(fs.createWriteStream(__dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-print.pdf' ), p, {
+                    mergePdf:true,
+                    texturePage: true,
+                    cutPage:false
+                }),
+                plane.createPDF(fs.createWriteStream(__dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-cut.pdf'), p, {
+                    mergePdf:false,
+                    texturePage: false,
+                    cutPage:true
+                }),
+                plane.createPDF(fs.createWriteStream(__dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-merged.pdf'), p, {
+                    mergePdf:true,
+                    texturePage: true,
+                    cutPage:true
+               })
+            ])
+            .then(()=>{
+                //TODO: send to printer?
+                /*
+                if(print)
+                exec print 
+                PrintDate?
+                res.end('print');
+                res.end('print@home');
+                */
+                res.end('print@home');
+                db.updateField(p._id, 'printState', PrintState.PRINT, null);
+                db.updateField(p._id, 'name', p.name, null);
+                db.updateField(p._id, 'info', req.body, null);
+                p.info = req.body;
+                
+                //if net send-email
+                if(req.body.email){
+                    sendmail(p);
+                }                
             });
-            plane.createPDF(fs.createWriteStream(__dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-cut.pdf' ), p, {
-                mergePdf:false,
-                texturePage: false,
-                cutPage:true
-            });
-            plane.createPDF(fs.createWriteStream(__dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-merged.pdf' ), p, {
-                mergePdf:true,
-                texturePage: true,
-                cutPage:true
-            });
-            //TODO: send to printer?
-            /*
-            setPrintQueuedState
-            exec print 
-            PrintDate?
-            */
-            db.updateField(p._id, 'printState', PrintState.PRINT, null);
-            db.updateField(p._id, 'info', req.body, null);
-            p.info = req.body;
-            //if net send-email
-            if(req.body.email){
-                sendmail(p);
-            }
-            res.sendStatus(200);
+          
         } else {
             res.sendStatus(404);   
         }
@@ -150,6 +167,7 @@ var transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
     secure: true,
+    debug: true,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD
@@ -157,19 +175,29 @@ var transporter = nodemailer.createTransport({
 });
 
 //sendmail
-function sendmail(p){    
+function sendmail(p){
     transporter.sendMail({
         from: 'info@fablab-lacote.ch',
         to: p.info.email,
         subject: 'avion:make ' + p._id,
         text: 'Your plane from FabLab La Côte avion:make (beta).',
-        //include files guide and info?
         attachments:[
-            {path: __dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-print.pdf'},
-            {path: __dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-cut.pdf'},
-            {path: __dirname  + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-merged.pdf'},
-            {path: __dirname + '/guide/' + p.type + '.png'}
+            {
+                path: __dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-print.pdf'
+            },
+            {
+                path:  __dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-cut.pdf'
+            },
+            {
+                path: __dirname  + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-merged.pdf'
+            },
+            {
+                filename: 'guide.png',
+                path: __dirname + '/guide/' + p.type + '.png'
+            }
         ]
+        
+        
     },(err, info)=>{
         //update state emailed...
         var emailSent:any = err;
@@ -180,7 +208,7 @@ function sendmail(p){
                 emailSent = 'not accepted';
             }
         }
-        db.updateField(p._id, 'info.emailSent', emailSent, null);
+        db.updateField(p._id, 'info.emailSent', emailSent, null); 
     });
 }
 

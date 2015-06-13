@@ -34,4 +34,31 @@ function updateField(id, field, value, callback) {
         $currentDate: { lastModified: true } }, callback);
 }
 exports.updateField = updateField;
+function firstPlanes(limit, callback) {
+    db.collection('plane').find({}, {
+        info: 0
+    }, {
+        sort: { lastModified: 1 },
+        limit: limit
+    }).toArray(callback);
+}
+exports.firstPlanes = firstPlanes;
+function nextPlanes(id, limit, callback) {
+    db.collection('plane').find({
+        _id: { $gt: id }
+    }, {
+        info: 0
+    }, {
+        sort: { lastModified: 1, _id: 1 },
+        limit: limit
+    }).toArray(function (err, data) {
+        if (data.length > 0) {
+            callback(err, data);
+        }
+        else {
+            firstPlanes(limit, callback);
+        }
+    });
+}
+exports.nextPlanes = nextPlanes;
 //# sourceMappingURL=db.js.map

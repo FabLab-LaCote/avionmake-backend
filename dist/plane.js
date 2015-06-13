@@ -89,6 +89,7 @@ function createPDF(stream, plane, options) {
           ctx.drawImage(img, 0, wy, p.width, p.height-wy, 0, 110, -p.width, p.height-wy);
           r.textureBitmap = canvas.toDataURL();
       } //fix plane1
+    
     */
     var doc = new PDFDocument({ size: 'A4', layout: 'landscape' });
     doc.pipe(stream);
@@ -99,7 +100,7 @@ function createPDF(stream, plane, options) {
     if (options.texturePage) {
         doc.font('Helvetica', 62)
             .stroke('black')
-            .text('AVION:MAKE:' + plane._id, 25, 25, {});
+            .text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 25, 25, {});
         doc.image(exports.fablab_logo, 1650, 0);
         var bleed = 0;
         if (!options.mergePdf) {
@@ -153,6 +154,11 @@ function createPDF(stream, plane, options) {
         });
     }
     doc.end();
+    return new Promise(function (resolve, reject) {
+        stream.on('finish', function () {
+            resolve();
+        });
+    });
 }
 exports.createPDF = createPDF;
 function getPartFromPlane(plane, name) {

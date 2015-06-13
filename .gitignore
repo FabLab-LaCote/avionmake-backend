@@ -31,4 +31,4 @@ typings
 server.js
 *.js.map
 .env
-pdf/*
+dist/pdf/*
