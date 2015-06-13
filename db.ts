@@ -1,3 +1,5 @@
+///<reference path="typings/tsd.d.ts" />
+
 import mongodb = require('mongodb');
 import autoIncrement = require('mongodb-autoincrement');
 import plane = require('./plane');
@@ -73,4 +75,16 @@ export function nextPlanes(id, limit, callback:(err, res)=>void){
        }
         
     });
+}
+
+export function getScores(callback:(err, res)=>void){
+    db.collection('plane').find({
+                score: {$exists:true},
+                printState: 5
+            }, {
+                info:0,
+                parts:0
+            }, {
+                sort: {score: -1},
+            }).toArray(callback);
 }

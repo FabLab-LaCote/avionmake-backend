@@ -81,6 +81,14 @@ app.post('/api/plane', function(req, res){
     }
 });
 
+app.get('/api/scores', function(req, res){
+    //get from db
+    db.getScores((err, scores)=>{
+        res.json(scores);
+    });
+});
+
+
 app.get('/api/plane/:id', function(req, res){
     //get from db
     db.getPlane(req.params.id, false, (err, p)=>{
