@@ -2,6 +2,7 @@
 
 import mongodb = require('mongodb');
 import autoIncrement = require('mongodb-autoincrement');
+import bcrypt = require('bcrypt');
 import plane = require('./plane');
 import PrintState = require('./printstate');
 
@@ -19,14 +20,14 @@ export function getNextId(collection:string, callback:(err, autoIndex)=>void){
 export function savePlane(plane:IPlane, callback:(err, res)=>void){
     plane.printState = PrintState.PREVIEW;
     plane.lastModified = new Date();
-    db.collection('plane')
+    db.collection('planes')
     .update({_id: plane._id}, plane, {upsert:true}, callback);
 }
 
 
 export function getPlane(id:string, fullPlane:boolean, callback:(err, res)=>void){
     //info are protected
-    db.collection('plane').findOne({_id: id}, {info:0}, (err, p) => {
+    db.collection('planes').findOne({_id: id}, {info:0}, (err, p) => {
         if(p && fullPlane){
             p = plane.expandPlane(p);
         }
@@ -35,14 +36,14 @@ export function getPlane(id:string, fullPlane:boolean, callback:(err, res)=>void
 }
 
 export function update(id:string, update:any, callback:(err, res)=>void){
-    db.collection('plane')
+    db.collection('planes')
     .update({_id: id}, {
         $set:update,
         $currentDate: { lastModified: true }}, callback);
 }
 
 export function firstPlanes(limit, callback:(err, res)=>void){
-    db.collection('plane').find({
+    db.collection('planes').find({
             lastModified: {$exists:true},
             disabled: false
         },
@@ -57,7 +58,7 @@ export function firstPlanes(limit, callback:(err, res)=>void){
 export function nextPlanes(id, limit, callback:(err, res)=>void){
     getPlane(id, false, (err, p)=>{
        if(p && p.lastModified){
-           db.collection('plane').find({
+           db.collection('planes').find({
              disabled: false,
              lastModified: {$gt: p.lastModified}
             }, {
@@ -80,7 +81,7 @@ export function nextPlanes(id, limit, callback:(err, res)=>void){
 }
 
 export function getScores(callback:(err, res)=>void){
-    db.collection('plane').find({
+    db.collection('planes').find({
             score: {$exists:true},
             disabled: false,
             printState: PrintState.FLY
@@ -93,11 +94,24 @@ export function getScores(callback:(err, res)=>void){
 }
 
 export function getStats(callback:(err, res)=>void){
-    db.collection('plane').find({
+    db.collection('planes').find({
             }, {
             info:0,
             parts:0
         }, {
             sort: {lastModified: 1,  _id: 1}
         }).toArray(callback);
+}
+
+export function getUser(username: string, callback:(err, res)=>void){
+    db.collection('users').findOne({
+        username: username
+    }, callback);
+}
+
+export function createUser(username: string, password: string, callback:(err, res)=>void){
+    db.collection('users').insert({
+        username: username,
+        password: bcrypt.hashSync(password, 10)
+    }, callback);
 }

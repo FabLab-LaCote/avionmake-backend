@@ -4,6 +4,7 @@ require('dotenv').load();
 import http = require('http');
 import cors = require('cors');
 import express = require('express');
+import session = require('express-session');
 import bodyParser = require('body-parser');
 import errorHandler = require('errorhandler');
 import raven = require('raven');
@@ -11,6 +12,9 @@ import fs = require('fs');
 import nodemailer = require('nodemailer');
 import isOnline = require('is-online');
 import childProcess = require('child_process');
+import passport = require('passport');
+import passportLocal = require('passport-local');
+import bcrypt = require('bcrypt');
 import PrintState = require('./printstate');
 
 var client = new raven.Client( process.env.SENTRY_DSN || '');
@@ -24,9 +28,19 @@ import plane = require('./plane');
 var app = express();
 
 app.use(raven.middleware.express(client));
-app.use(cors());
+app.use(cors({
+    origin:true,
+    credentials:true
+}));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({limit: '50mb'}));
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    saveUninitialized: false,
+    resave: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 var env = process.env.NODE_ENV || 'development';
 if (env === 'development') {
@@ -40,13 +54,74 @@ else if (env === 'production') {
     app.use(express.static(__dirname + '/public'));
 }
 
+passport.use(new passportLocal.Strategy((username, password, done)=>{
+    db.getUser(username, (err, user)=>{
+        if(user && bcrypt.compareSync(password, user.password)){
+            done(null, user);
+        }else{
+            done(null, false, {message: 'incorrect login'});   
+        }
+    });
+}));
+
+passport.serializeUser((user, done)=>{
+    done(null, user.username);
+});
+
+passport.deserializeUser((username, done)=>{
+    db.getUser(username, (err, user)=>{
+        if(user){
+            done(null, user);
+        }else{
+            done(null, false);   
+        }
+    });
+});
 
 var SERVER_PREFIX:string = process.env.SERVER_PREFIX || 'FL';
 
+function ensureAuthenticated(req, res, next){
+    if(req.isAuthenticated()) {
+        return next();
+    }
+    res.sendStatus(401);
+}
+
+app.get('/api/create/:username/:password',  function(req, res){
+   db.createUser(req.params.username, req.params.password, (err, u)=>{
+      res.json(u);
+   }); 
+});
+
 //admin
-app.post('/api/set/:id', function(req, res){
-    //TODO CHECK ADMIN
+app.post('/api/login', function(req, res, next) {
+    return passport.authenticate('local', function(err, user) {
+        if (err) {
+            return next(err);
+        }
+        if (!user) {
+            return res.send(400, {
+                message: 'Bad username or password'
+            });
+        }
+        req.logIn(user, function(err) {
+            if (err) {
+                return next(err);
+            }
+            //delete private data from user before sending
+            res.json(200, user.username);
+        });
+    })(req, res, next);
+});
     
+app.get('/api/logout', (req, res)=>{
+   req.logout(); 
+   res.end();
+});
+
+app.post('/api/set/:id',
+    ensureAuthenticated, 
+    function(req, res){
     //blindely trust admin data...
     db.update(req.params.id, req.body, (err, c)=>{
         //return stats;
@@ -56,6 +131,14 @@ app.post('/api/set/:id', function(req, res){
     });
 });
 
+app.get('/api/stats',
+    ensureAuthenticated,
+    function(req, res){
+    //get from db
+    db.getStats((err, planes)=>{
+        res.json(planes);
+    });
+});
 
 
 //save/update
@@ -100,13 +183,6 @@ app.get('/api/scores', function(req, res){
     //get from db
     db.getScores((err, scores)=>{
         res.json(scores);
-    });
-});
-
-app.get('/api/stats', function(req, res){
-    //get from db
-    db.getStats((err, planes)=>{
-        res.json(planes);
     });
 });
 

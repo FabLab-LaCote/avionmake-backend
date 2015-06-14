@@ -103,7 +103,7 @@ function createPDF(stream, plane, options) {
         doc.font('Helvetica', 62)
             .stroke('black')
             .text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 50, 50, {});
-        doc.image(exports.fablab_logo, 1650, 0);
+        doc.image(exports.fablab_logo, 1600, 0);
         var bleed = 0;
         if (!options.mergePdf) {
             bleed = 10;
