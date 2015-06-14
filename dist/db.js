@@ -38,7 +38,8 @@ exports.update = update;
 function firstPlanes(limit, callback) {
     db.collection('planes').find({
         lastModified: { $exists: true },
-        disabled: false
+        printState: { $gte: 2 },
+        $or: [{ disabled: false }, { disabled: { $exists: false } }]
     }, {
         info: 0
     }, {
@@ -51,8 +52,9 @@ function nextPlanes(id, limit, callback) {
     getPlane(id, false, function (err, p) {
         if (p && p.lastModified) {
             db.collection('planes').find({
-                disabled: false,
-                lastModified: { $gt: p.lastModified }
+                lastModified: { $gt: p.lastModified },
+                printState: { $gte: 2 },
+                $or: [{ disabled: false }, { disabled: { $exists: false } }]
             }, {
                 info: 0
             }, {
@@ -76,8 +78,8 @@ exports.nextPlanes = nextPlanes;
 function getScores(callback) {
     db.collection('planes').find({
         score: { $exists: true },
-        disabled: false,
-        printState: 5
+        printState: 5,
+        $or: [{ disabled: false }, { disabled: { $exists: false } }]
     }, {
         info: 0,
         parts: 0

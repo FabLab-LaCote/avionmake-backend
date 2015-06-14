@@ -125,6 +125,9 @@ app.post('/api/set/:id',
     //blindely trust admin data...
     db.update(req.params.id, req.body, (err, c)=>{
         //return stats;
+        if(err){
+            client.captureError(err);    
+        }
         db.getStats((err2, planes)=>{
             res.json(planes);
         });    
@@ -145,6 +148,9 @@ app.get('/api/stats',
 app.post('/api/plane', function(req, res){
     function saveNewPlane(){
         db.getNextId(SERVER_PREFIX, (err, autoIndex)=>{
+            if(err){
+                client.captureError(err);    
+            }
             req.body._id = SERVER_PREFIX + '-' + autoIndex;
             req.body.previewCount = 1;
             db.savePlane(<IPlane>req.body, (err, result)=>{
@@ -156,6 +162,9 @@ app.post('/api/plane', function(req, res){
         if(req.body._id){
             //if id and found and note printed update
             db.getPlane(req.body._id, false, (err, p)=>{
+                if(err){
+                    client.captureError(err);    
+                }
                 if(p && p.hasOwnProperty('printState')){
                     if(p.printState < PrintState.PRINT){
                         req.body.previewCount = 1 + p.previewCount;
@@ -222,7 +231,10 @@ app.get('/api/nextplanes/:id?/:limit?', function(req, res){
 //print = create pdf files
 app.post('/api/print/:id', function(req, res){
    
-    db.getPlane(req.params.id, true, (err, p:IPlane)=>{  
+    db.getPlane(req.params.id, true, (err, p:IPlane)=>{
+        if(err){
+            client.captureError(err);    
+        }
         if(p){
             p.name = req.body.name;
             delete req.body.name;
@@ -259,7 +271,11 @@ app.post('/api/print/:id', function(req, res){
                     printDate: new Date(),
                     name: p.name,
                     info: req.body 
-                },null);
+                },(err, r)=>{
+                    if(err){
+                        client.captureError(err);    
+                    }
+                });
                 p.info = req.body;
                 
                 //if net send-email
@@ -323,7 +339,14 @@ function sendmail(p){
                 emailSent = 'not accepted';
             }
         }
-        db.update(p._id, {'info.emailSent': emailSent}, null); 
+        if(err){
+            client.captureError(err);    
+        }
+        db.update(p._id, {'info.emailSent': emailSent}, (err, r)=>{
+            if(err){
+                client.captureError(err);    
+            }
+        }); 
     });
 }
 
@@ -334,8 +357,9 @@ function sendmail(p){
 //disable a plane from collection
 //update score
 
-app.listen(9001, function(){
-    console.log('server listening on port %d in %s mode', 9001, app.settings.env);
+var server = app.listen(9001, 'localhost');
+server.on('listening', function(){
+    console.log('server listening on port %d in %s mode', server.address().port, app.settings.env);
 });
 
 export var App = app;

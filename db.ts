@@ -45,7 +45,8 @@ export function update(id:string, update:any, callback:(err, res)=>void){
 export function firstPlanes(limit, callback:(err, res)=>void){
     db.collection('planes').find({
             lastModified: {$exists:true},
-            disabled: false
+            printState: {$gte: PrintState.PRINT},
+            $or: [{disabled: false},{disabled:{$exists:false}}] 
         },
         {
             info:0
@@ -59,8 +60,9 @@ export function nextPlanes(id, limit, callback:(err, res)=>void){
     getPlane(id, false, (err, p)=>{
        if(p && p.lastModified){
            db.collection('planes').find({
-             disabled: false,
-             lastModified: {$gt: p.lastModified}
+             lastModified: {$gt: p.lastModified},
+             printState: {$gte: PrintState.PRINT},
+             $or: [{disabled: false},{disabled:{$exists:false}}]
             }, {
                 info:0
             }, {
@@ -83,8 +85,8 @@ export function nextPlanes(id, limit, callback:(err, res)=>void){
 export function getScores(callback:(err, res)=>void){
     db.collection('planes').find({
             score: {$exists:true},
-            disabled: false,
-            printState: PrintState.FLY
+            printState: PrintState.FLY,
+            $or: [{disabled: false},{disabled:{$exists:false}}]
         }, {
             info:0,
             parts:0
