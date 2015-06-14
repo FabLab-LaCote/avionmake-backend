@@ -100,7 +100,7 @@ app.post('/api/login', function(req, res, next) {
             return next(err);
         }
         if (!user) {
-            return res.send(400, {
+            return res.status(400).send({
                 message: 'Bad username or password'
             });
         }
@@ -109,7 +109,7 @@ app.post('/api/login', function(req, res, next) {
                 return next(err);
             }
             //delete private data from user before sending
-            res.json(200, user.username);
+            res.json(user.username);
         });
     })(req, res, next);
 });
