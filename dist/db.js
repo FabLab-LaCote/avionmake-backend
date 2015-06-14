@@ -27,18 +27,17 @@ function getPlane(id, fullPlane, callback) {
     });
 }
 exports.getPlane = getPlane;
-function updateField(id, field, value, callback) {
-    var update = {};
-    update[field] = value;
+function update(id, update, callback) {
     db.collection('plane')
         .update({ _id: id }, {
         $set: update,
         $currentDate: { lastModified: true } }, callback);
 }
-exports.updateField = updateField;
+exports.update = update;
 function firstPlanes(limit, callback) {
     db.collection('plane').find({
-        lastModified: { $exists: true }
+        lastModified: { $exists: true },
+        disabled: false
     }, {
         info: 0
     }, {
@@ -51,6 +50,7 @@ function nextPlanes(id, limit, callback) {
     getPlane(id, false, function (err, p) {
         if (p && p.lastModified) {
             db.collection('plane').find({
+                disabled: false,
                 lastModified: { $gt: p.lastModified }
             }, {
                 info: 0
@@ -75,6 +75,7 @@ exports.nextPlanes = nextPlanes;
 function getScores(callback) {
     db.collection('plane').find({
         score: { $exists: true },
+        disabled: false,
         printState: 5
     }, {
         info: 0,

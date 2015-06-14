@@ -34,9 +34,7 @@ export function getPlane(id:string, fullPlane:boolean, callback:(err, res)=>void
     });
 }
 
-export function updateField(id:string, field:string, value:any, callback:(err, res)=>void){
-    var update = {};
-    update[field] = value;
+export function update(id:string, update:any, callback:(err, res)=>void){
     db.collection('plane')
     .update({_id: id}, {
         $set:update,
@@ -45,7 +43,8 @@ export function updateField(id:string, field:string, value:any, callback:(err, r
 
 export function firstPlanes(limit, callback:(err, res)=>void){
     db.collection('plane').find({
-            lastModified: {$exists:true}
+            lastModified: {$exists:true},
+            disabled: false
         },
         {
             info:0
@@ -59,6 +58,7 @@ export function nextPlanes(id, limit, callback:(err, res)=>void){
     getPlane(id, false, (err, p)=>{
        if(p && p.lastModified){
            db.collection('plane').find({
+             disabled: false,
              lastModified: {$gt: p.lastModified}
             }, {
                 info:0
@@ -82,6 +82,7 @@ export function nextPlanes(id, limit, callback:(err, res)=>void){
 export function getScores(callback:(err, res)=>void){
     db.collection('plane').find({
             score: {$exists:true},
+            disabled: false,
             printState: PrintState.FLY
         }, {
             info:0,

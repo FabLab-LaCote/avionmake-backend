@@ -43,12 +43,27 @@ else if (env === 'production') {
 
 var SERVER_PREFIX:string = process.env.SERVER_PREFIX || 'FL';
 
+//admin
+app.post('/api/set/:id', function(req, res){
+    //TODO CHECK ADMIN
+    
+    //blindely trust admin data...
+    db.update(req.params.id, req.body, (err, c)=>{
+        //return stats;
+        db.getStats((err2, planes)=>{
+            res.json(planes);
+        });    
+    });
+});
+
+
+
 //save/update
 app.post('/api/plane', function(req, res){
     function saveNewPlane(){
         db.getNextId(SERVER_PREFIX, (err, autoIndex)=>{
             req.body._id = SERVER_PREFIX + '-' + autoIndex;
-            
+            req.body.previewCount = 1;
             db.savePlane(<IPlane>req.body, (err, result)=>{
                 res.end(req.body._id);
             });    
@@ -60,6 +75,7 @@ app.post('/api/plane', function(req, res){
             db.getPlane(req.body._id, false, (err, p)=>{
                 if(p && p.hasOwnProperty('printState')){
                     if(p.printState < PrintState.PRINT){
+                        req.body.previewCount = 1 + p.previewCount;
                         db.savePlane(<IPlane>req.body, (err, result)=>{
                             res.end(String(req.body._id));
                         });
@@ -162,10 +178,12 @@ app.post('/api/print/:id', function(req, res){
                 }else{
                     res.end('print@home');    
                 }
-
-                db.updateField(p._id, 'printState', PrintState.PRINT, null);
-                db.updateField(p._id, 'name', p.name, null);
-                db.updateField(p._id, 'info', req.body, null);
+                db.update(p._id, {
+                    printState: PrintState.PRINT,
+                    printDate: new Date(),
+                    name: p.name,
+                    info: req.body 
+                },null);
                 p.info = req.body;
                 
                 //if net send-email
@@ -229,7 +247,7 @@ function sendmail(p){
                 emailSent = 'not accepted';
             }
         }
-        db.updateField(p._id, 'info.emailSent', emailSent, null); 
+        db.update(p._id, {'info.emailSent': emailSent}, null); 
     });
 }
 
