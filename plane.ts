@@ -22,12 +22,14 @@ export function expandPlane(obj):IPlane{
       obj.parts.forEach((part:Part)=>{
             var localPart = getPartFromPlane(p, part.name);
             //update decals
-            localPart.decals = part.decals;
-            localPart.decals.forEach((decal:Decal)=>{
-              if(decal.locked === 'tailnumber'){
-                decal.text = obj._id;
-              }
-            });
+            if(part.hasOwnProperty('decals')){
+              localPart.decals = part.decals;
+              localPart.decals.forEach((decal:Decal)=>{
+                if(decal.locked === 'tailnumber'){
+                  decal.text = obj._id;
+                }
+              });
+            }
             
             localPart.textureBitmap = part.textureBitmap;
             
@@ -105,17 +107,18 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
 	doc.info.author = '';
     var scale = 0.42;
 	 
+   
 	doc.scale(scale);
-	
-	// draw SVG plane
-    if(options.texturePage){
+		// draw SVG plane
+    if(plane.parts && options.texturePage){
         //first page print version
     	doc.font('Helvetica', 62)
     	.stroke('black')
-    	.text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 25, 25, {});    
+    	.text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 50, 50, {});    
     	doc.image(fablab_logo,1650,0);
     	      
       var bleed = 0;
+      
       if(!options.mergePdf){
         bleed = 10;
       }
@@ -135,7 +138,7 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
         doc.addPage();
         doc.scale(scale);
     }
-    if(options.cutPage){
+    if(plane.parts && options.cutPage){
         doc.lineWidth(0.001);   
         
         //svg + decals

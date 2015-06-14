@@ -19,12 +19,14 @@ function expandPlane(obj) {
         var p = { parts: parts };
         obj.parts.forEach(function (part) {
             var localPart = getPartFromPlane(p, part.name);
-            localPart.decals = part.decals;
-            localPart.decals.forEach(function (decal) {
-                if (decal.locked === 'tailnumber') {
-                    decal.text = obj._id;
-                }
-            });
+            if (part.hasOwnProperty('decals')) {
+                localPart.decals = part.decals;
+                localPart.decals.forEach(function (decal) {
+                    if (decal.locked === 'tailnumber') {
+                        decal.text = obj._id;
+                    }
+                });
+            }
             localPart.textureBitmap = part.textureBitmap;
         });
         obj.parts = parts;
@@ -97,10 +99,10 @@ function createPDF(stream, plane, options) {
     doc.info.author = '';
     var scale = 0.42;
     doc.scale(scale);
-    if (options.texturePage) {
+    if (plane.parts && options.texturePage) {
         doc.font('Helvetica', 62)
             .stroke('black')
-            .text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 25, 25, {});
+            .text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 50, 50, {});
         doc.image(exports.fablab_logo, 1650, 0);
         var bleed = 0;
         if (!options.mergePdf) {
@@ -117,7 +119,7 @@ function createPDF(stream, plane, options) {
         doc.addPage();
         doc.scale(scale);
     }
-    if (options.cutPage) {
+    if (plane.parts && options.cutPage) {
         doc.lineWidth(0.001);
         plane.parts.forEach(function (part) {
             if (part.hasOwnProperty('position2D')) {
