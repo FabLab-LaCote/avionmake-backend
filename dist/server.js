@@ -265,8 +265,9 @@ function sendmail(p) {
     transporter.sendMail({
         from: 'info@fablab-lacote.ch',
         to: p.info.email,
-        subject: 'avion:make ' + p._id,
-        text: 'Your plane from FabLab La Côte avion:make (beta).',
+        subject: 'FabLab La Côte - avion:make ' + p._id,
+        text: "Bonjour et merci pour votre participation à notre atelier.\n\nNous espérons que les différentes étapes de réalisation vous ont plus.\nVous trouverez, ci-joint, les plans de votre avion à découper ainsi que les instructions de montage.\n\nRéutilisez-les à volonté et éclatez-vous!\n\nAméliorez votre avion en y rajoutant des LED pour des vols de nuit ou encore un petit moteur pour qu'il aille encore plus loin!\n\nVous ne savez pas comment faire?\nPassez au FabLab la Côte, nous vous donnerons des pistes!\n\nA bientôt,\nL'équipe du FabLab la Côte\nhttp://www.fablab-lacote.ch/",
+        html: "<p>Bonjour et merci pour votre participation à notre atelier.</p><p>Nous espérons que les différentes étapes de réalisation vous ont plus.<br/>Vous trouverez, ci-joint, les plans de votre avion à découper ainsi que les instructions de montage.</p><p>Réutilisez-les à volonté et clatez-vous!<br/>Améliorez votre avion en y rajoutant des LED pour des vols de nuit ou encore un petit moteur pour qu'il aille encore plus loin!</p><p>Vous ne savez pas comment faire?<br/>Passez au FabLab la Côte, nous vous donnerons des pistes!</p><p>A bientôt,<br/>L'équipe du FabLab la Côte</p>" + '<p><img src="http://www.fablab-lacote.ch/FabLab.png" alt="" /></p><pre><span style="font-size: medium; color: #006eb8;"><a style="text-decoration: none;"><span style="color: #006eb8;"><strong> www.fablab-lacote.ch</strong></span></a></span></pre><pre>&nbsp;</pre><pre><strong>Suivez-nous sur:</strong><a title="Likez notre page!" href="https://www.facebook.com/FabLabLaCote"><img src="http://www.fablab-lacote.ch/facebook.jpg" alt="" /></a> <a title="Rejoignez notre communaut&eacute; google" href="https://plus.google.com/u/0/communities/111573537840303612395"><img src="http://www.fablab-lacote.ch/google.jpg" alt="" /></a> <a title="Suivez-nous sur Twitter" href="https://twitter.com/FabLabLaCote"><img src="http://www.fablab-lacote.ch/twitter.jpg" alt="" /></a></pre></div>',
         attachments: [
             {
                 path: __dirname + '/pdf/' + SERVER_PREFIX + '/' + p._id + '-print.pdf'
@@ -302,7 +303,7 @@ function sendmail(p) {
         });
     });
 }
-var server = app.listen(9001, 'localhost');
+var server = app.listen(process.env.SERVER_PORT, 'localhost');
 server.on('listening', function () {
     console.log('server listening on port %d in %s mode', server.address().port, app.settings.env);
 });
