@@ -27,8 +27,6 @@ node_modules
 # Users Environment Variables
 .lock-wscript
 
-typings
-server.js
 *.js.map
 .env
 dist/pdf/*
