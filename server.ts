@@ -1,3 +1,24 @@
+/*
+
+This file is part of avionmake.
+
+Copyright (C) 2015  Boris Fritscher
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see http://www.gnu.org/licenses/.
+
+*/
+
 ///<reference path="typings/tsd.d.ts" />
 
 require('dotenv').load();
@@ -59,7 +80,7 @@ passport.use(new passportLocal.Strategy((username, password, done)=>{
         if(user && bcrypt.compareSync(password, user.password)){
             done(null, user);
         }else{
-            done(null, false, {message: 'incorrect login'});   
+            done(null, false, {message: 'incorrect login'});
         }
     });
 }));
@@ -73,7 +94,7 @@ passport.deserializeUser((username, done)=>{
         if(user){
             done(null, user);
         }else{
-            done(null, false);   
+            done(null, false);
         }
     });
 });
@@ -90,7 +111,7 @@ function ensureAuthenticated(req, res, next){
 app.get('/api/create/:username/:password',  function(req, res){
    db.createUser(req.params.username, req.params.password, (err, u)=>{
       res.json(u);
-   }); 
+   });
 });
 
 //admin
@@ -113,24 +134,24 @@ app.post('/api/login', function(req, res, next) {
         });
     })(req, res, next);
 });
-    
+
 app.get('/api/logout', (req, res)=>{
-   req.logout(); 
+   req.logout();
    res.end();
 });
 
 app.post('/api/set/:id',
-    ensureAuthenticated, 
+    ensureAuthenticated,
     function(req, res){
     //blindely trust admin data...
     db.update(req.params.id, req.body, (err, c)=>{
         //return stats;
         if(err){
-            client.captureError(err);    
+            client.captureError(err);
         }
         db.getStats((err2, planes)=>{
             res.json(planes);
-        });    
+        });
     });
 });
 
@@ -149,21 +170,21 @@ app.post('/api/plane', function(req, res){
     function saveNewPlane(){
         db.getNextId(SERVER_PREFIX, (err, autoIndex)=>{
             if(err){
-                client.captureError(err);    
+                client.captureError(err);
             }
             req.body._id = SERVER_PREFIX + '-' + autoIndex;
             req.body.previewCount = 1;
             db.savePlane(<IPlane>req.body, (err, result)=>{
                 res.end(req.body._id);
-            });    
+            });
         });
-    }   
+    }
     try{
         if(req.body._id){
             //if id and found and note printed update
             db.getPlane(req.body._id, false, (err, p)=>{
                 if(err){
-                    client.captureError(err);    
+                    client.captureError(err);
                 }
                 if(p && p.hasOwnProperty('printState')){
                     if(p.printState < PrintState.PRINT){
@@ -177,7 +198,7 @@ app.post('/api/plane', function(req, res){
                 }else{
                     saveNewPlane();
                 }
-            });      
+            });
         }else{
             //if no_id -> save with newid
             saveNewPlane();
@@ -199,7 +220,7 @@ app.get('/api/plane/:id', function(req, res){
     //get from db
     db.getPlane(req.params.id, false, (err, p)=>{
         res.json(p);
-        res.end();    
+        res.end();
     });
 });
 
@@ -212,7 +233,7 @@ app.get('/api/pdf/:id', function(req, res){
             mergePdf:req.query.hasOwnProperty('merge'),
             texturePage: true,
             cutPage:true
-        });    
+        });
     });
 });
 
@@ -230,10 +251,10 @@ app.get('/api/nextplanes/:id?/:limit?', function(req, res){
 
 //print = create pdf files
 app.post('/api/print/:id', function(req, res){
-   
+
     db.getPlane(req.params.id, true, (err, p:IPlane)=>{
         if(err){
-            client.captureError(err);    
+            client.captureError(err);
         }
         if(p){
             p.name = req.body.name;
@@ -262,22 +283,22 @@ app.post('/api/print/:id', function(req, res){
                         {
                             stdio: 'ignore'
                         });
-                    res.end('print');    
+                    res.end('print');
                 }else{
-                    res.end('print@home');    
+                    res.end('print@home');
                 }
                 db.update(p._id, {
                     printState: PrintState.PRINT,
                     printDate: new Date(),
                     name: p.name,
-                    info: req.body 
+                    info: req.body
                 },(err, r)=>{
                     if(err){
-                        client.captureError(err);    
+                        client.captureError(err);
                     }
                 });
                 p.info = req.body;
-                
+
                 //if net send-email
                 if(req.body.email){
                     isOnline((err, isOnline)=>{
@@ -285,11 +306,11 @@ app.post('/api/print/:id', function(req, res){
                           sendmail(p);
                       }
                     });
-                }                
+                }
             });
-          
+
         } else {
-            res.sendStatus(404);   
+            res.sendStatus(404);
         }
     });
 });
@@ -328,8 +349,8 @@ function sendmail(p){
                 path: __dirname + '/guide/' + p.type + '.png'
             }
         ]
-        
-        
+
+
     },(err, info)=>{
         //update state emailed...
         var emailSent:any = err;
@@ -341,13 +362,13 @@ function sendmail(p){
             }
         }
         if(err){
-            client.captureError(err);    
+            client.captureError(err);
         }
         db.update(p._id, {'info.emailSent': emailSent}, (err, r)=>{
             if(err){
-                client.captureError(err);    
+                client.captureError(err);
             }
-        }); 
+        });
     });
 }
 

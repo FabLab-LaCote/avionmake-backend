@@ -1,3 +1,24 @@
+/*
+
+This file is part of avionmake.
+
+Copyright (C) 2015  Boris Fritscher
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see http://www.gnu.org/licenses/.
+
+*/
+
 ///<reference path="typings/avionmake.d.ts" />
 import clone = require('clone');
 import planeTemplates = require('./planeTemplates');
@@ -30,9 +51,9 @@ export function expandPlane(obj):IPlane{
                 }
               });
             }
-            
+
             localPart.textureBitmap = part.textureBitmap;
-            
+
       });
       obj.parts = parts;
     }
@@ -41,13 +62,13 @@ export function expandPlane(obj):IPlane{
 
 export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IPdfOptions):Promise<any>{
 	//CUSTOM FIX textures TODO move
-  /* scale mirroring broken :-( 
+  /* scale mirroring broken :-(
 	if(plane.type === 'plane1'){
         var p = getPartFromPlane(plane, 'fuselage');
         var c = getPartFromPlane(plane, 'cockpit');
         var l = getPartFromPlane(plane, 'left_side');
         var r = getPartFromPlane(plane, 'right_side');
-        
+
         //copy decals
         var wy = 172;
         var ww = 370;
@@ -66,7 +87,7 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
             l.decals.push(dl);
           }
         });
-         
+
         //copy textures
         var canvas = new Canvas(c.width, c.height);
         var ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
@@ -76,17 +97,17 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
         ctx.scale(1, -1);
         ctx.drawImage(img, 0, wy, ww, p.height-wy, 0, -0, ww, -(p.height-wy));
         c.textureBitmap = canvas.toDataURL();
-            
+
         //copy left
-        
+
         canvas = new Canvas(c.width, c.height);
         ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
         canvas.width = l.width;
         canvas.height = l.height;
         ctx.drawImage(img, 0, wy, p.width, p.height-wy, 0, 110, p.width, p.height-wy);
-        
+
         l.textureBitmap = canvas.toDataURL();
-        
+
         //copy right
         canvas = new Canvas(c.width, c.height);
         ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
@@ -96,9 +117,9 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
         ctx.drawImage(img, 0, wy, p.width, p.height-wy, 0, 110, -p.width, p.height-wy);
         r.textureBitmap = canvas.toDataURL();
 	} //fix plane1
-  
+
   */
-  
+
 	//create PDF
 	var doc = new PDFDocument({size:'A4', layout:'landscape'});
 	//fs.createWriteStream('/path/to/file.pdf') # write to PDF
@@ -106,23 +127,23 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
 	doc.info.title = 'AVION:MAKE';
 	doc.info.author = '';
     var scale = 0.42;
-	 
-   
+
+
 	doc.scale(scale);
 		// draw SVG plane
     if(plane.parts && options.texturePage){
         //first page print version
     	doc.font('Helvetica', 62)
     	.stroke('black')
-    	.text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 50, 50, {lineBreak:false});    
+    	.text('AVION:MAKE ' + plane._id + ' : ' + (plane.name || ''), 50, 50, {lineBreak:false});
     	doc.image(fablab_logo,1600,0);
-    	      
+
       var bleed = 0;
-      
+
       if(!options.mergePdf){
         bleed = 10;
       }
-            
+
     	plane.parts.forEach((part:Part, i:number) => {
     	   if(part.hasOwnProperty('position2D') && part.hasOwnProperty('textureBitmap') && part.textureBitmap){
     	       doc.image(part.textureBitmap,
@@ -139,10 +160,10 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
         doc.scale(scale);
     }
     if(plane.parts && options.cutPage){
-        doc.lineWidth(0.001);   
-        
+        doc.lineWidth(0.001);
+
         //svg + decals
-        
+
         plane.parts.forEach((part:Part) => {
           if(part.hasOwnProperty('position2D')){
             doc.translate(part.position2D.x, part.position2D.y);
@@ -152,30 +173,30 @@ export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IP
             doc.stroke('red');
             //draw decals
             if(part.hasOwnProperty('decals')){
-              part.decals.forEach((d:Decal)=>{              
+              part.decals.forEach((d:Decal)=>{
                 // draw text
                 doc.rotate(d.angle,{origin:[d.x,d.y]});
                 if(d.text){
-                  
+
                   doc.font('Helvetica', d.size)
                      .lineWidth(0.001)
                      .text(d.text, d.x, d.y, {
                        stroke: true,
                        fill: false,
                        lineBreak:false
-                     }); 
-                  
+                     });
+
                 }
                 //draw symbols
                 if(d.path){
                   doc.translate(d.x, d.y);
-                  doc.scale(d.size);  
+                  doc.scale(d.size);
                   doc.path(d.path);
                   doc.stroke();
                   doc.scale(1/d.size);
                   doc.translate(-d.x, -d.y);
                 }
-                doc.rotate(-d.angle,{origin:[d.x,d.y]});                          
+                doc.rotate(-d.angle,{origin:[d.x,d.y]});
               });
             }
             doc.translate(-part.position2D.x, -part.position2D.y);
