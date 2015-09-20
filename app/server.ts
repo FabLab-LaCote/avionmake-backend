@@ -398,7 +398,7 @@ function subscribe(email: string) {
         datacenter: process.env.MAILCHIMP_DATACENTER
     });
     mailchimp.v2.post('/lists/batch-subscribe', {
-        id: 'cbfe16667d',
+        id: process.env.MAILCHIMP_LIST_ID,
         update_existing: true,
         double_optin: false,
         replace_interests: false,
