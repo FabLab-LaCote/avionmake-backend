@@ -22,12 +22,12 @@ along with this program; if not, see http://www.gnu.org/licenses/.
 ///<reference path="../typings/tsd.d.ts" />
 
 import mongodb = require('mongodb');
-import autoIncrement = require('mongodb-autoincrement');
+import autoIncrement = require('./mongodb-autoincrement');
 import bcrypt = require('bcrypt');
 import plane = require('./plane');
 import PrintState = require('./printstate');
 
-var server = new mongodb.Server('localhost', 27017, {auto_reconnect: true});
+var server = new mongodb.Server(process.env.MONGODB_PORT_27017_TCP_ADDR, process.env.MONGODB_PORT_27017_TCP_PORT, {auto_reconnect: true});
 var db = new mongodb.Db('avionmake', server, { w: 1 });
 db.open(function() {
     db.createIndex('planes', {
@@ -36,7 +36,6 @@ db.open(function() {
     }, {name: 'dateModifiedSort'}, (err, result) => {
         console.log(err, result);
     });
-    
 	return true;
 });
 

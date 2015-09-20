@@ -37,6 +37,8 @@ import passport = require('passport');
 import passportLocal = require('passport-local');
 import bcrypt = require('bcrypt');
 import PrintState = require('./printstate');
+import Mailchimp = require('mailchimp-lite');
+
 
 var client = new raven.Client( process.env.SENTRY_DSN || '');
 client.patchGlobal(function(sent, err) {
@@ -100,6 +102,10 @@ passport.deserializeUser((username, done)=>{
 });
 
 var SERVER_PREFIX:string = process.env.SERVER_PREFIX || 'FL';
+
+fs.mkdir(__dirname + '/pdf/' + SERVER_PREFIX, (err) => {
+    console.log('mkdir', err.message);
+});
 
 function ensureAuthenticated(req, res, next){
     if(req.isAuthenticated()) {
@@ -167,24 +173,35 @@ app.get('/api/stats',
 
 //save/update
 app.post('/api/plane', function(req, res){
+
     function saveNewPlane(){
-        db.getNextId(SERVER_PREFIX, (err, autoIndex)=>{
+        db.getNextId(SERVER_PREFIX, (err:Error, autoIndex)=>{
             if(err){
                 client.captureError(err);
+                res.status(500);
+                res.end('unable to get id: ' + err.message);
             }
             req.body._id = SERVER_PREFIX + '-' + autoIndex;
             req.body.previewCount = 1;
             db.savePlane(<IPlane>req.body, (err, result)=>{
+                if(err){
+                    client.captureError(err);
+                    res.status(500);
+                    res.end(err.message);
+                }
                 res.end(req.body._id);
             });
         });
     }
+
     try{
         if(req.body._id){
             //if id and found and note printed update
             db.getPlane(req.body._id, false, (err, p)=>{
                 if(err){
                     client.captureError(err);
+                    res.status(500);
+                    res.end('err getting plane');
                 }
                 if(p && p.hasOwnProperty('printState')){
                     if(p.printState < PrintState.PRINT){
@@ -205,7 +222,7 @@ app.post('/api/plane', function(req, res){
         }
     }catch(err){
          res.status(500);
-         res.end(err);
+         res.end(err.message);
     }
 });
 
@@ -304,6 +321,9 @@ app.post('/api/print/:id', function(req, res){
                     isOnline((err, isOnline)=>{
                       if(isOnline){
                           sendmail(p);
+                          if(req.body.newsletter) {
+                              subscribe(req.body.email);
+                          }
                       }
                     });
                 }
@@ -353,7 +373,7 @@ function sendmail(p){
 
     },(err, info)=>{
         //update state emailed...
-        var emailSent:any = err.message;
+        var emailSent:any = err;
         if(!err && info && info.accepted){
             if(info.accepted.indexOf(p.email)>-1){
                 emailSent = new Date();
@@ -372,7 +392,30 @@ function sendmail(p){
     });
 }
 
-var server = app.listen(process.env.SERVER_PORT, 'localhost');
+function subscribe(email: string) {
+    var mailchimp = new Mailchimp({
+        key: process.env.MAILCHIMP_API_KEY,
+        datacenter: process.env.MAILCHIMP_DATACENTER
+    });
+    mailchimp.v2.post('/lists/batch-subscribe', {
+        id: 'cbfe16667d',
+        update_existing: true,
+        double_optin: false,
+        replace_interests: false,
+        batch: [
+            {email: {email: email}}
+        ]
+    })
+    .catch((error) => {
+        console.log(error); // Mailchimp Error: 401
+        console.log(error.response);
+    })
+    .then((response) => {
+        console.log('mailchimp:' + response);
+    });
+}
+
+var server = app.listen(process.env.SERVER_PORT || 9000, process.env.SERVER_HOST || 'localhost');
 server.on('listening', function(){
     console.log('server listening on port %d in %s mode', server.address().port, app.settings.env);
 });

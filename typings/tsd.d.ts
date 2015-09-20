@@ -33,3 +33,11 @@ declare module "mongodb-autoincrement"{
     import mongodb = require("mongodb");
     export function getNextSequence(db:mongodb.Db, collectionName:string, fieldName:string, callback: (err,autoIndex:number)=>void):void;
 }
+
+
+declare module 'mailchimp-lite'{
+    var Mailchimp:{
+        new(args:any):any;
+    }
+    export = Mailchimp;
+}
