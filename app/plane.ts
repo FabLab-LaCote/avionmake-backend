@@ -19,13 +19,11 @@ along with this program; if not, see http://www.gnu.org/licenses/.
 
 */
 
-///<reference path="typings/avionmake.d.ts" />
+///<reference path="../typings/avionmake.d.ts" />
 import clone = require('clone');
 import planeTemplates = require('./planeTemplates');
-import Canvas = require('canvas');
 import PDFDocument = require('pdfkit');
 
-var Image = Canvas.Image;
 export enum PrintState{NONE,PREVIEW,PRINT,CUT};
 
 export var fablab_logo:string;
@@ -61,75 +59,16 @@ export function expandPlane(obj):IPlane{
 }
 
 export function createPDF(stream:NodeJS.WritableStream, plane:IPlane, options:IPdfOptions):Promise<any>{
-	//CUSTOM FIX textures TODO move
-  /* scale mirroring broken :-(
-	if(plane.type === 'plane1'){
-        var p = getPartFromPlane(plane, 'fuselage');
-        var c = getPartFromPlane(plane, 'cockpit');
-        var l = getPartFromPlane(plane, 'left_side');
-        var r = getPartFromPlane(plane, 'right_side');
-
-        //copy decals
-        var wy = 172;
-        var ww = 370;
-        l.decals = [];
-        r.decals = [];
-        c.decals = [];
-        p.decals.forEach((d:Decal) =>{
-          if(d.y > wy){
-            if(d.x < ww){
-              var c1 = clone(d);
-              c1.y = c1.y-52;
-              c.decals.push(c1);
-            }
-            var dl = clone(d);
-            dl.y = dl.y-60;
-            l.decals.push(dl);
-          }
-        });
-
-        //copy textures
-        var canvas = new Canvas(c.width, c.height);
-        var ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
-        var img = new Image();
-        img.src = p.textureBitmap;
-        ctx.drawImage(img, 0, wy, ww, p.height-wy, 0, 120, ww, p.height-wy);
-        ctx.scale(1, -1);
-        ctx.drawImage(img, 0, wy, ww, p.height-wy, 0, -0, ww, -(p.height-wy));
-        c.textureBitmap = canvas.toDataURL();
-
-        //copy left
-
-        canvas = new Canvas(c.width, c.height);
-        ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
-        canvas.width = l.width;
-        canvas.height = l.height;
-        ctx.drawImage(img, 0, wy, p.width, p.height-wy, 0, 110, p.width, p.height-wy);
-
-        l.textureBitmap = canvas.toDataURL();
-
-        //copy right
-        canvas = new Canvas(c.width, c.height);
-        ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
-        canvas.width = r.width;
-        canvas.height = r.height;
-        ctx.scale(-1, 1);
-        ctx.drawImage(img, 0, wy, p.width, p.height-wy, 0, 110, -p.width, p.height-wy);
-        r.textureBitmap = canvas.toDataURL();
-	} //fix plane1
-
-  */
-
-	//create PDF
-	var doc = new PDFDocument({size:'A4', layout:'landscape'});
-	//fs.createWriteStream('/path/to/file.pdf') # write to PDF
+    //create PDF
+    var doc = new PDFDocument({size:'A4', layout:'landscape'});
+    //fs.createWriteStream('/path/to/file.pdf') # write to PDF
     doc.pipe(stream);
-	doc.info.title = 'AVION:MAKE';
-	doc.info.author = '';
+    doc.info.title = 'AVION:MAKE';
+    doc.info.author = '';
     var scale = 0.42;
 
 
-	doc.scale(scale);
+    doc.scale(scale);
 		// draw SVG plane
     if(plane.parts && options.texturePage){
         //first page print version

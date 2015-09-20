@@ -284,10 +284,10 @@ function sendmail(p) {
             }
         ]
     }, function (err, info) {
-        var emailSent = err;
+        var emailSent = err.message;
         if (!err && info && info.accepted) {
             if (info.accepted.indexOf(p.email) > -1) {
-                emailSent = new Date();
+                emailSent = new Date().toISOString();
             }
             else {
                 emailSent = 'not accepted';

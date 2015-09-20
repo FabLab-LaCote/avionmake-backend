@@ -19,7 +19,7 @@ along with this program; if not, see http://www.gnu.org/licenses/.
 
 */
 
-///<reference path="typings/tsd.d.ts" />
+///<reference path="../typings/tsd.d.ts" />
 
 require('dotenv').load();
 import http = require('http');
@@ -353,7 +353,7 @@ function sendmail(p){
 
     },(err, info)=>{
         //update state emailed...
-        var emailSent:any = err;
+        var emailSent:any = err.message;
         if(!err && info && info.accepted){
             if(info.accepted.indexOf(p.email)>-1){
                 emailSent = new Date();

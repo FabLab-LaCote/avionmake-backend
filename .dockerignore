@@ -1,0 +1,7 @@
+docker
+.env
+.production.env
+Dockerfile
+docker-compose.yml
+node_modules/*
+data/*

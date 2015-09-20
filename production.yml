@@ -1,0 +1,15 @@
+mongodb:
+  image: mongo:3
+  volumes:
+    - ./data/db:/data/db
+  restart: always
+avionmakeserver:
+  build: .
+  env_file: .env
+  restart: always
+  volumes:
+    - ./data/pdf:/avionmake/dist/pdf
+  ports:
+    - "127.0.0.1:9001:9001"
+  links:
+    - mongodb:mongodb

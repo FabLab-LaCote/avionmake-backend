@@ -15,7 +15,6 @@
   "dependencies": {
     "bcrypt": "^0.8.3",
     "body-parser": "^1.12.4",
-    "canvas": "^1.2.3",
     "clone": "^1.0.2",
     "cors": "^2.7.1",
     "dotenv": "^1.1.0",

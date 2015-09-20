@@ -1,0 +1,18 @@
+mongodb:
+  image: mongo:3
+# not working with vboxfs
+  volumes:
+    - /data/db:/data/db
+  ports:
+    - "27017:27017"
+avionmakeserver:
+  build: .
+  env_file: .env
+  command: bash -c "while true; do sleep 3; grunt serve; done"
+  volumes:
+    - ./data/pdf:/avionmake/dist/pdf
+    - ./app:/avionmake/app
+  ports:
+    - "9001:9001"
+  links:
+    - mongodb:mongodb

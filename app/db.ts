@@ -19,7 +19,7 @@ along with this program; if not, see http://www.gnu.org/licenses/.
 
 */
 
-///<reference path="typings/tsd.d.ts" />
+///<reference path="../typings/tsd.d.ts" />
 
 import mongodb = require('mongodb');
 import autoIncrement = require('mongodb-autoincrement');

@@ -19,7 +19,7 @@ along with this program; if not, see http://www.gnu.org/licenses/.
 
 */
 
-///<reference path="typings/avionmake.d.ts" />
+///<reference path="../typings/avionmake.d.ts" />
 export var plane1:Part[]= [
   {
     name: 'fuselage',
