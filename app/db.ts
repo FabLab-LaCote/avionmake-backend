@@ -30,6 +30,13 @@ import PrintState = require('./printstate');
 var server = new mongodb.Server('localhost', 27017, {auto_reconnect: true});
 var db = new mongodb.Db('avionmake', server, { w: 1 });
 db.open(function() {
+    db.createIndex('planes', {
+        'lastModified' : 1,
+        '_id' : 1
+    }, {name: 'dateModifiedSort'}, (err, result) => {
+        console.log(err, result);
+    });
+    
 	return true;
 });
 
